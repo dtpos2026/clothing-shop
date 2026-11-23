@@ -16,7 +16,11 @@ function calcTotal(cs: ColorStock[]): number {
 
 export function seedDemoData() {
   const store = useStore.getState();
-  if (store.products.length > 0) return; // already seeded
+  // Only seed a brand-new install, after storage has hydrated, and only once ever –
+  // so deleting all products (or slow storage) can never bring demo data back.
+  if (!store._hasHydrated || store.demoSeeded) return;
+  if (store.products.length > 0 || store.sales.length > 0) { store.markDemoSeeded(); return; }
+  store.markDemoSeeded();
 
   const fabricProducts: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>[] = [
     {

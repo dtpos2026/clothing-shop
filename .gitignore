@@ -22,3 +22,22 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Build outputs
+dist-admin
+release
+android/app/build
+android/.gradle
+android/build
+*.apk
+*.aab
+*.keystore
+*.jks
+functions/lib
+functions/node_modules
+.firebase
+.env
+.env.*
+!.env.example
+test-results
+playwright-report
