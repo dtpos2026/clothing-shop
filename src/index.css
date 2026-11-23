@@ -217,3 +217,15 @@
     margin: 0;
   }
 }
+
+/* ---- v3 additions ---- */
+.safe-top { padding-top: env(safe-area-inset-top); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+html.lang-ur body { font-family: var(--urdu-font), 'Plus Jakarta Sans', sans-serif; }
+html.lang-ur input, html.lang-ur textarea { font-family: inherit; }
+@media print { .no-print { display: none !important; } }
+/* larger touch targets on phones */
+@media (max-width: 767px) {
+  button, [role="button"], input, select { min-height: 40px; }
+  .dense-touch button { min-height: 0; }
+}

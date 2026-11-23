@@ -15,6 +15,13 @@ import { BUSINESS_COLLECTIONS, migrateState } from '@/core/migrations';
 import { SCHEMA_VERSION } from '@/core/defaults';
 import { cashBook, cashTotals, CASH_METHODS, dayOf, isReturn, salePayments, todayKey } from '@/core/accounting';
 import { getDeviceId } from '@/platform/device';
+import { useDeviceConfig } from '@/cloud/status';
+
+/** INV-01001 (single device) or INV-W1-01001 when a device series is configured for multi-device sync. */
+const docNo = (prefix: string, n: number) => {
+  const series = useDeviceConfig.getState().invoiceSeries;
+  return `${prefix}-${series ? `${series}-` : ''}${String(n).padStart(5, '0')}`;
+};
 
 const generateId = () => crypto.randomUUID();
 const now = () => new Date().toISOString();
@@ -398,7 +405,7 @@ export const useStore = create<AppState>()(
           : saleType;
         const creditAmount = effType === 'cash' ? 0 : round2(Math.max(0, payable - received));
         if (creditAmount > 0 && !s.cartCustomerId) return null; // udhar needs a customer
-        const invoiceNumber = `INV-${String(s.invoiceCounter + 1).padStart(5, '0')}`;
+        const invoiceNumber = docNo('INV', s.invoiceCounter + 1);
         const allPayments = [...exchangePay, ...moneyPayments];
         const primary = moneyPayments.slice().sort((a, b) => b.amount - a.amount)[0]?.method || paymentMethod;
 
@@ -554,7 +561,7 @@ export const useStore = create<AppState>()(
         const returnCounter = s.returnCounter + 1;
         const ret: Sale = {
           id: generateId(),
-          invoiceNumber: `RET-${String(returnCounter).padStart(5, '0')}`,
+          invoiceNumber: docNo('RET', returnCounter),
           customerId: orig.customerId,
           customerName: orig.customerName,
           customerPhone: orig.customerPhone,
@@ -695,7 +702,7 @@ export const useStore = create<AppState>()(
       addPurchase: (input) => {
         const s = get();
         const purchaseCounter = s.purchaseCounter + 1;
-        const purchaseNumber = `PUR-${String(purchaseCounter).padStart(5, '0')}`;
+        const purchaseNumber = docNo('PUR', purchaseCounter);
         const purchaseId = generateId();
         let products = s.products;
         const receivings: GoodsReceiving[] = [];
