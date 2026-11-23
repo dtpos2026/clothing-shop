@@ -1,0 +1,219 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* Bundled custom fonts */
+@font-face {
+  font-family: 'Jameel Noori Nastaleeq';
+  src: url('/fonts/Jameel_Noori_Nastaleeq_Regular.ttf') format('truetype'),
+       url('/src/assets/fonts/Jameel_Noori_Nastaleeq_Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Jameel Noori Kasheeda';
+  src: url('/src/assets/fonts/Jameel_Noori_Nastaleeq_Kasheeda.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Aseer Unicode';
+  src: url('/src/assets/fonts/Aseer_Unicode_Aseer_Unicode.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Montserrat';
+  src: url('/src/assets/fonts/Montserrat-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Montserrat';
+  src: url('/src/assets/fonts/Montserrat-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Norvas Demo';
+  src: url('/src/assets/fonts/NorvasDemoExpanded-5yGxx.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Regaltion Highter';
+  src: url('/src/assets/fonts/RegaltionHighter-aYvDx.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@layer base {
+  :root {
+    --background: 40 20% 98%;
+    --foreground: 160 30% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 160 30% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 160 30% 10%;
+
+    --primary: 160 60% 28%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 40 30% 94%;
+    --secondary-foreground: 160 30% 15%;
+
+    --muted: 40 15% 94%;
+    --muted-foreground: 160 10% 45%;
+
+    --accent: 38 90% 55%;
+    --accent-foreground: 38 90% 15%;
+
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 40 15% 89%;
+    --input: 40 15% 89%;
+    --ring: 160 60% 28%;
+
+    --radius: 0.75rem;
+
+    --sidebar-bg: 160 40% 12%;
+    --sidebar-fg: 160 10% 85%;
+    --sidebar-hover: 160 30% 18%;
+    --sidebar-active: 160 50% 24%;
+    --sidebar-accent: 38 90% 55%;
+
+    --success: 145 60% 40%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 90% 55%;
+    --warning-foreground: 38 90% 15%;
+    --info: 210 70% 50%;
+    --info-foreground: 0 0% 100%;
+
+    --sidebar-background: 160 40% 12%;
+    --sidebar-foreground: 160 10% 85%;
+    --sidebar-primary: 38 90% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 160 30% 18%;
+    --sidebar-accent-foreground: 160 10% 85%;
+    --sidebar-border: 160 30% 18%;
+    --sidebar-ring: 38 90% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+}
+
+@layer utilities {
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 3px;
+  }
+}
+
+/* Receipt print styles */
+@media print {
+  /* Hide everything on page */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 80mm !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  body * {
+    visibility: hidden !important;
+    position: static !important;
+    overflow: visible !important;
+  }
+  /* Hide dialog overlays completely */
+  [data-radix-portal],
+  [role="dialog"],
+  [data-state="open"],
+  .fixed,
+  .absolute:not(.print-receipt) {
+    display: none !important;
+  }
+  /* Show print area */
+  #print-receipt-area,
+  #report-print-receipt-area {
+    display: block !important;
+    visibility: visible !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 80mm !important;
+    z-index: 999999 !important;
+  }
+  #print-receipt-area *,
+  #report-print-receipt-area *,
+  .print-receipt,
+  .print-receipt * {
+    visibility: visible !important;
+    color: #000 !important;
+    background: #fff !important;
+    border-color: #ccc !important;
+  }
+  .print-receipt {
+    position: relative !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 80mm !important;
+    max-width: 80mm !important;
+    margin: 0 !important;
+    padding: 3mm !important;
+    font-size: 11px !important;
+    line-height: 1.3 !important;
+    page-break-inside: avoid !important;
+  }
+  .print-receipt table {
+    width: 100% !important;
+  }
+  .print-receipt th,
+  .print-receipt td {
+    color: #000 !important;
+    padding: 1px 0 !important;
+    font-size: 10px !important;
+  }
+  .print-receipt img {
+    visibility: visible !important;
+    max-width: 50mm !important;
+    max-height: 15mm !important;
+  }
+  .print-receipt svg {
+    visibility: visible !important;
+  }
+  .print-receipt .text-lg {
+    font-size: 14px !important;
+  }
+  .print-receipt .text-base {
+    font-size: 12px !important;
+  }
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+}
