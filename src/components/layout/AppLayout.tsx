@@ -1,40 +1,13 @@
 import { ReactNode, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, ShoppingCart, ScanLine, Package, Menu, Cloud, CloudOff, RefreshCw, AlertTriangle, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, ScanLine, Package, Menu } from 'lucide-react';
 import { AppSidebar } from './AppSidebar';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useT } from '@/i18n';
 import { useScanner } from '@/components/scan/ScanProvider';
-import { useCloudStatus } from '@/cloud/status';
+import { StatusChips } from './StatusChips';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store/useStore';
-
-function StatusChips() {
-  const { online, sync, pending, license, syncError } = useCloudStatus();
-  const navigate = useNavigate();
-  const lic = license;
-  return (
-    <div className="flex items-center gap-1.5">
-      <button onClick={() => navigate('/cloud')} title={syncError || `Sync: ${sync}`}
-        className={cn('flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold border',
-          !online ? 'bg-muted text-muted-foreground border-border'
-            : sync === 'error' ? 'bg-destructive/10 text-destructive border-destructive/30'
-              : sync === 'syncing' ? 'bg-info/10 text-info border-info/30'
-                : sync === 'idle' ? 'bg-success/10 text-success border-success/30' : 'bg-muted text-muted-foreground border-border')}>
-        {!online ? <CloudOff className="w-3 h-3" /> : sync === 'syncing' ? <RefreshCw className="w-3 h-3 animate-spin" /> : sync === 'error' ? <AlertTriangle className="w-3 h-3" /> : <Cloud className="w-3 h-3" />}
-        <span className="hidden sm:inline">{!online ? 'Offline' : sync === 'disabled' ? 'Local only' : sync === 'idle' ? 'Synced' : sync === 'syncing' ? `Syncing${pending ? ` ${pending}` : ''}` : sync === 'error' ? 'Sync error' : 'Offline'}</span>
-      </button>
-      {lic && (
-        <button onClick={() => navigate('/cloud')} title={lic.state === 'invalid' ? lic.reason : 'License'}
-          className={cn('flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold border',
-            lic.state === 'valid' ? 'bg-success/10 text-success border-success/30' : lic.state === 'grace' ? 'bg-warning/10 text-warning border-warning/30' : 'bg-destructive/10 text-destructive border-destructive/30')}>
-          {lic.state === 'valid' ? <ShieldCheck className="w-3 h-3" /> : <ShieldAlert className="w-3 h-3" />}
-          <span className="hidden sm:inline">{lic.state === 'valid' ? `${lic.daysLeft}d` : lic.state === 'grace' ? `Grace ${lic.graceDaysLeft}d` : 'Unlicensed'}</span>
-        </button>
-      )}
-    </div>
-  );
-}
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -62,8 +35,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <p className="font-bold text-sm truncate">{storeName}</p>
           <StatusChips />
         </header>
-        {/* Desktop status strip */}
-        <div className="hidden md:flex no-print absolute top-2 end-4 z-20"><StatusChips /></div>
 
         <main className="flex-1 overflow-auto pb-16 md:pb-0">{children}</main>
 

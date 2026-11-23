@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { useT } from '@/i18n';
 import { NAV_ITEMS } from './nav';
 import { APP_VERSION } from '@/core/defaults';
+import { StatusChips } from './StatusChips';
 
 const GROUP_LABEL: Record<string, string> = { sell: 'Sell', stock: 'Stock', people: 'People', money: 'Money', system: 'System' };
 
@@ -41,6 +42,8 @@ export function AppSidebar({ onNavigate, forceExpanded }: { onNavigate?: () => v
           </div>
         )}
       </div>
+
+      {!collapsed && <div className="px-4 py-2 border-b" style={{ borderColor: 'hsl(var(--sidebar-hover))' }}><StatusChips /></div>}
 
       {!collapsed && showLogout && (
         <div className="px-4 py-2 border-b flex items-center justify-between" style={{ borderColor: 'hsl(var(--sidebar-hover))' }}>

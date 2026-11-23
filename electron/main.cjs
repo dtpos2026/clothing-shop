@@ -5,6 +5,32 @@ const os = require('os');
 
 let mainWindow;
 
+// --- One-time data migration from the v1/v2 install ---------------------------------
+// Electron keeps data in %APPDATA%/<app name>. Older builds used the package name
+// "vite_react_shadcn_ts" (or a packager-chosen name). When the new data folder has no
+// database yet, COPY (never move) the most recent legacy database so upgrading keeps
+// every product, sale and customer. The legacy folder is left untouched as a fallback.
+function migrateLegacyData() {
+  try {
+    const target = path.join(app.getPath('userData'), 'db');
+    const storeFile = 'clothing-pos-store.json';
+    if (fs.existsSync(path.join(target, storeFile))) return;
+    const appData = app.getPath('appData');
+    const candidates = ['vite_react_shadcn_ts', 'Karachi Cloth Center POS', 'KarachiClothCenter', 'karachi-cloth-center', 'clothing-shop', 'Electron']
+      .map(n => path.join(appData, n, 'db'))
+      .filter(d => d !== target && fs.existsSync(path.join(d, storeFile)))
+      .sort((a, b) => fs.statSync(path.join(b, storeFile)).mtimeMs - fs.statSync(path.join(a, storeFile)).mtimeMs);
+    if (!candidates.length) return;
+    fs.mkdirSync(target, { recursive: true });
+    for (const f of fs.readdirSync(candidates[0])) {
+      fs.copyFileSync(path.join(candidates[0], f), path.join(target, f));
+    }
+    fs.writeFileSync(path.join(target, 'MIGRATED_FROM.txt'), `${candidates[0]}\n${new Date().toISOString()}\n`);
+  } catch (e) {
+    console.error('legacy data migration failed:', e);
+  }
+}
+
 // --- File-based JSON storage ---
 const dbDir = path.join(app.getPath('userData'), 'db');
 
@@ -199,7 +225,7 @@ if (!app.requestSingleInstanceLock()) {
   app.on('second-instance', () => {
     if (mainWindow) { if (mainWindow.isMinimized()) mainWindow.restore(); mainWindow.focus(); }
   });
-  app.whenReady().then(createWindow);
+  app.whenReady().then(() => { migrateLegacyData(); createWindow(); });
 }
 
 app.on('window-all-closed', () => {

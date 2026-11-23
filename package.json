@@ -140,7 +140,8 @@
     "files": [
       "dist/**/*",
       "electron/**/*",
-      "package.json"
+      "package.json",
+      "!node_modules/**/*"
     ],
     "asar": true,
     "win": {
@@ -150,10 +151,16 @@
           "arch": [
             "x64"
           ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "icon": "public/favicon.ico",
-      "artifactName": "DT-Fabric-POS-Setup-${version}.${ext}"
+      "artifactName": "DT-Fabric-POS-${version}-${arch}.${ext}"
     },
     "nsis": {
       "oneClick": false,
@@ -162,10 +169,12 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "DT Fabric POS",
-      "deleteAppDataOnUninstall": false
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "DT-Fabric-POS-Setup-${version}.${ext}"
     },
     "extraMetadata": {
       "main": "electron/main.cjs"
-    }
+    },
+    "npmRebuild": false
   }
 }
