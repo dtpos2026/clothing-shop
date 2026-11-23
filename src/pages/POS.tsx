@@ -507,8 +507,8 @@ function MeterAddDialog({ product, color, tier, currency, onAdd, onClose }: {
             ))}
           </div>
           <div>
-            <Label>{unit === 'meter' ? 'Meters' : 'Suits'}</Label>
-            <Input autoFocus type="number" inputMode="decimal" step={unit === 'meter' ? 0.25 : 1} min={0} value={qty} onChange={e => setQty(e.target.value)} className="text-lg font-mono" />
+            <Label htmlFor="meter-qty">{unit === 'meter' ? 'Meters' : 'Suits'}</Label>
+            <Input id="meter-qty" autoFocus type="number" inputMode="decimal" step={unit === 'meter' ? 0.25 : 1} min={0} value={qty} onChange={e => setQty(e.target.value)} className="text-lg font-mono" />
             <div className="flex flex-wrap gap-1 mt-1.5">
               {(unit === 'meter' ? [1, 2, 2.5, 3, 4, 4.5, 5, 6] : [1, 2, 3, 5]).map(v => (
                 <button type="button" key={v} onClick={() => setQty(String(v))} className="px-2 py-0.5 text-xs rounded border border-border hover:bg-muted dense-touch">{v}</button>
@@ -517,8 +517,8 @@ function MeterAddDialog({ product, color, tier, currency, onAdd, onClose }: {
           </div>
           {rolls.length > 0 && (
             <div>
-              <Label>Cut from thaan</Label>
-              <select className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm" value={rollId} onChange={e => setRollId(e.target.value)}>
+              <Label htmlFor="meter-roll">Cut from thaan</Label>
+              <select id="meter-roll" className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm" value={rollId} onChange={e => setRollId(e.target.value)}>
                 <option value="">Auto (oldest first)</option>
                 {rolls.map(r => <option key={r.id} value={r.id}>{r.rollNo}{r.color ? ` · ${r.color}` : ''} — {r.remainingMeters} m left</option>)}
               </select>

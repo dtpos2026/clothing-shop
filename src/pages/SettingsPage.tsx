@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { UserRole } from '@/types';
+import { LanguageSettings, NotificationSettings, CatalogueSettings, PrinterPicker } from '@/components/settings/ExtraSettings';
 
 export default function SettingsPage() {
   const { settings, updateSettings, users, addUser, deleteUser, updateUser } = useStore();
@@ -68,6 +69,9 @@ export default function SettingsPage() {
           <TabsTrigger value="developer">Developer</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="budget">Budget</TabsTrigger>
+          <TabsTrigger value="language">Language / زبان</TabsTrigger>
+          <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          <TabsTrigger value="catalogue">Catalogue</TabsTrigger>
         </TabsList>
 
         <TabsContent value="branding" className="mt-4">
@@ -185,10 +189,17 @@ export default function SettingsPage() {
 
         <TabsContent value="printer" className="mt-4">
           <div className="bg-card rounded-xl border border-border p-5 max-w-lg space-y-4">
+            <PrinterPicker />
             <div><Label>Printer Name</Label><Input value={settings.printerName} onChange={e => updateSettings({ printerName: e.target.value })} /></div>
             <div>
               <Label>Printer Type</Label>
-              <div className="mt-1 px-3 py-2 rounded-md bg-muted text-sm font-medium">Thermal 80mm</div>
+              <div className="mt-1 grid grid-cols-2 gap-2">
+                {(['80mm', '58mm'] as const).map(t => (
+                  <button key={t} onClick={() => updateSettings({ printerType: t, invoiceDesign: settings.invoiceDesign ? { ...settings.invoiceDesign, paperSize: t } : settings.invoiceDesign })}
+                    className={`px-3 py-2 rounded-md border text-sm font-medium ${settings.printerType === t ? 'border-primary bg-primary/10' : 'border-border'}`}>Thermal {t}</button>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">A4 / A5 invoices: choose the paper size in Invoice Designer.</p>
             </div>
             <div className="flex items-center justify-between">
               <Label>Auto Print After Payment</Label>
@@ -333,6 +344,10 @@ export default function SettingsPage() {
         </TabsContent>
 
         {/* Budget Tab */}
+        <TabsContent value="language" className="mt-4"><LanguageSettings /></TabsContent>
+        <TabsContent value="notifications" className="mt-4"><NotificationSettings /></TabsContent>
+        <TabsContent value="catalogue" className="mt-4"><CatalogueSettings /></TabsContent>
+
         <TabsContent value="budget" className="mt-4">
           <div className="bg-card rounded-xl border border-border p-5 max-w-lg space-y-4">
             <h3 className="font-bold">Monthly Budget Limits</h3>

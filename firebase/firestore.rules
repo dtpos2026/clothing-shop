@@ -1,0 +1,55 @@
+rules_version = '2';
+// Data isolation model
+// - Each shop's data lives under businesses/{bid}/...
+// - A signed-in user may access ONLY the business in their custom claim `bid`
+//   (set by Cloud Functions during license activation), and only while the
+//   business is active. Writes additionally require the business to be active.
+// - Licenses, devices, activation history, audit logs and app versions are written
+//   only by Cloud Functions (Admin SDK bypasses rules). Super admins (claim
+//   superAdmin == true) can read them for the admin panel.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function superAdmin() { return signedIn() && request.auth.token.superAdmin == true; }
+    function inBusiness(bid) { return signedIn() && request.auth.token.bid == bid; }
+    function businessActive(bid) { return get(/databases/$(database)/documents/businesses/$(bid)).data.status == 'active'; }
+
+    match /businesses/{bid} {
+      allow read: if inBusiness(bid) || superAdmin();
+      allow write: if false; // functions only
+
+      match /members/{uid} {
+        allow read: if inBusiness(bid) || superAdmin();
+        allow write: if false;
+      }
+      match /devices/{deviceId} {
+        allow read: if inBusiness(bid) || superAdmin();
+        // devices may only update their own push token / heartbeat fields
+        allow write: if inBusiness(bid) && businessActive(bid)
+          && request.resource.data.keys().hasOnly(['fcmToken', 'updatedAt']);
+      }
+      // business records: products, sales, customers, meta/settings, …
+      match /{collection}/{docId} {
+        allow read: if inBusiness(bid) && collection != 'members';
+        allow write: if inBusiness(bid) && businessActive(bid)
+          && !(collection in ['members', 'devices', 'licenseInfo'])
+          && request.resource.size() < 900 * 1024
+          && (request.resource.data.keys().hasAll(['rev', 'dev']) || collection == 'meta');
+        allow read: if superAdmin() && collection == 'meta';
+      }
+    }
+
+    match /licenses/{key} {
+      allow read: if superAdmin();
+      allow write: if false;
+      match /devices/{deviceId} { allow read: if superAdmin(); allow write: if false; }
+    }
+    match /activations/{id} { allow read: if superAdmin(); allow write: if false; }
+    match /auditLogs/{id} { allow read: if superAdmin(); allow write: if false; }
+    match /systemLogs/{id} { allow read: if superAdmin(); allow write: if false; }
+    match /notifications/{id} { allow read: if superAdmin(); allow write: if false; }
+    // app versions are public so apps can check for updates
+    match /appVersions/{platform} { allow read: if true; allow write: if false; }
+    match /{document=**} { allow read, write: if false; }
+  }
+}

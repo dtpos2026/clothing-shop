@@ -1,0 +1,7 @@
+{
+  "indexes": [
+    { "collectionGroup": "activations", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "licenseKey", "order": "ASCENDING" }, { "fieldPath": "at", "order": "DESCENDING" }] },
+    { "collectionGroup": "auditLogs", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "businessId", "order": "ASCENDING" }, { "fieldPath": "at", "order": "DESCENDING" }] }
+  ],
+  "fieldOverrides": []
+}

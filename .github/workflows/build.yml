@@ -1,0 +1,93 @@
+name: Build & Test
+
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+# Build-time config comes from repository Variables/Secrets (Settings → Secrets and variables → Actions).
+# All are optional: without them the apps build as fully offline/local editions.
+env:
+  VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
+  VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}
+  VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
+  VITE_FIREBASE_STORAGE_BUCKET: ${{ vars.VITE_FIREBASE_STORAGE_BUCKET }}
+  VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ vars.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+  VITE_FIREBASE_APP_ID: ${{ vars.VITE_FIREBASE_APP_ID }}
+  VITE_FIREBASE_FUNCTIONS_REGION: ${{ vars.VITE_FIREBASE_FUNCTIONS_REGION }}
+  VITE_LICENSE_PUBLIC_KEY: ${{ vars.VITE_LICENSE_PUBLIC_KEY }}
+  VITE_ENABLE_PUSH: ${{ vars.VITE_ENABLE_PUSH }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+        env: { ELECTRON_SKIP_BINARY_DOWNLOAD: '1' }
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm run build:admin
+      - run: npx playwright install --with-deps chromium && npm run e2e
+      - run: npm --prefix functions ci && npm --prefix functions test
+      - uses: actions/upload-artifact@v4
+        with: { name: super-admin-web, path: dist-admin }
+
+  windows:
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run electron:dist
+        env:
+          # optional code signing: CSC_LINK (base64 .pfx) and CSC_KEY_PASSWORD secrets
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+      - uses: actions/upload-artifact@v4
+        with: { name: windows-installer, path: release/*.exe }
+
+  android:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
+      - uses: android-actions/setup-android@v3
+      - run: npm ci
+        env: { ELECTRON_SKIP_BINARY_DOWNLOAD: '1' }
+      - name: google-services.json (optional, enables FCM push)
+        if: ${{ secrets.GOOGLE_SERVICES_JSON != '' }}
+        run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
+      - name: Release keystore
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        run: |
+          echo '${{ secrets.ANDROID_KEYSTORE_BASE64 }}' | base64 -d > $RUNNER_TEMP/release.jks
+          printf "storeFile=$RUNNER_TEMP/release.jks\nstorePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}\nkeyAlias=${{ secrets.ANDROID_KEY_ALIAS }}\nkeyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}\n" > android/keystore.properties
+      - run: npm run android:sync
+      - run: cd android && chmod +x gradlew && ./gradlew assembleRelease assembleDebug
+      - uses: actions/upload-artifact@v4
+        with: { name: android-apk, path: android/app/build/outputs/apk/**/*.apk }
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [windows, android]
+    runs-on: ubuntu-latest
+    permissions: { contents: write }
+    steps:
+      - uses: actions/download-artifact@v4
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            windows-installer/*.exe
+            android-apk/**/*.apk

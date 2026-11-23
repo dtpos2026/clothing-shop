@@ -1,4 +1,9 @@
 import { useState, useMemo } from 'react';
+import { toast } from 'sonner';
+import type { Customer, PaymentMethod } from '@/types';
+import { ExportButtons } from '@/components/share/ExportButtons';
+import { customerStatement } from '@/lib/datasets';
+import { PAYMENT_METHODS } from '@/core/defaults';
 import { useStore } from '@/store/useStore';
 import { Search, Plus, Edit2, Users as UsersIcon, FileText, FileDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -18,20 +23,26 @@ export default function Customers() {
   const [address, setAddress] = useState('');
   const [notes, setNotes] = useState('');
   const [showHistory, setShowHistory] = useState<string | null>(null);
+  const [opening, setOpening] = useState('');
+  const [stmtId, setStmtId] = useState<string | null>(null);
+  const [payAmt, setPayAmt] = useState('');
+  const [payMethod, setPayMethod] = useState<PaymentMethod>('Cash');
+  const { receiveCustomerPayment, getCustomerKhataBalance } = useStore();
+  const stmtCustomer = customers.find(c => c.id === stmtId);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return customers.filter(c => !q || c.name.toLowerCase().includes(q) || c.phone.includes(q));
   }, [customers, search]);
 
-  const openAdd = () => { setName(''); setPhone(''); setAddress(''); setNotes(''); setEditId(null); setShowForm(true); };
-  const openEdit = (c: any) => { setName(c.name); setPhone(c.phone); setAddress(c.address || ''); setNotes(c.notes || ''); setEditId(c.id); setShowForm(true); };
+  const openAdd = () => { setName(''); setPhone(''); setAddress(''); setNotes(''); setOpening(''); setEditId(null); setShowForm(true); };
+  const openEdit = (c: Customer) => { setName(c.name); setPhone(c.phone); setAddress(c.address || ''); setNotes(c.notes || ''); setOpening(c.openingBalance ? String(c.openingBalance) : ''); setEditId(c.id); setShowForm(true); };
 
   const handleSave = () => {
     if (editId) {
-      updateCustomer(editId, { name, phone, address, notes });
+      updateCustomer(editId, { name, phone, address, notes, openingBalance: parseFloat(opening) || 0 });
     } else {
-      addCustomer({ name, phone, address, notes });
+      addCustomer({ name, phone, address, notes, openingBalance: parseFloat(opening) || 0 });
     }
     setShowForm(false);
   };
@@ -68,6 +79,7 @@ export default function Customers() {
             <th className="text-left p-3 font-medium">Phone</th>
             <th className="text-left p-3 font-medium">Address</th>
             <th className="text-left p-3 font-medium">Since</th>
+            <th className="text-right p-3 font-medium">Balance</th>
             <th className="text-center p-3 font-medium">Actions</th>
           </tr></thead>
           <tbody>
@@ -77,13 +89,15 @@ export default function Customers() {
                 <td className="p-3">{c.phone}</td>
                 <td className="p-3 text-muted-foreground text-xs">{c.address || '-'}</td>
                 <td className="p-3 text-xs">{format(parseISO(c.createdAt), 'dd MMM yyyy')}</td>
+                <td className={`p-3 text-right font-mono ${getCustomerKhataBalance(c.id) > 0 ? 'text-destructive font-semibold' : ''}`}>{getCustomerKhataBalance(c.id).toLocaleString()}</td>
                 <td className="p-3 text-center">
                   <Button variant="ghost" size="sm" onClick={() => setShowHistory(c.id)}>History</Button>
+                  <Button variant="ghost" size="sm" onClick={() => { setStmtId(c.id); setPayAmt(''); }}>Statement</Button>
                   <Button variant="ghost" size="sm" onClick={() => openEdit(c)}><Edit2 className="w-3.5 h-3.5" /></Button>
                 </td>
               </tr>
             ))}
-            {filtered.length === 0 && <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">No customers</td></tr>}
+            {filtered.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No customers</td></tr>}
           </tbody>
         </table>
       </div>
@@ -97,6 +111,7 @@ export default function Customers() {
             <div><Label>Phone</Label><Input value={phone} onChange={e => setPhone(e.target.value)} /></div>
             <div><Label>Address</Label><Input value={address} onChange={e => setAddress(e.target.value)} /></div>
             <div><Label>Notes</Label><Input value={notes} onChange={e => setNotes(e.target.value)} /></div>
+            <div><Label>Opening balance (amount customer already owes)</Label><Input type="number" value={opening} onChange={e => setOpening(e.target.value)} /></div>
           </div>
           <div className="flex justify-end gap-2 mt-4">
             <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
@@ -124,6 +139,34 @@ export default function Customers() {
               ))}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+      {/* Statement / ledger */}
+      <Dialog open={!!stmtCustomer} onOpenChange={v => !v && setStmtId(null)}>
+        <DialogContent className="sm:max-w-2xl max-h-[92dvh] overflow-auto">
+          <DialogHeader><DialogTitle>Statement – {stmtCustomer?.name}</DialogTitle></DialogHeader>
+          {stmtCustomer && (() => {
+            const spec = customerStatement(stmtCustomer, useStore.getState().getBusinessData());
+            const bal = getCustomerKhataBalance(stmtCustomer.id);
+            return (
+              <div className="space-y-3">
+                <ExportButtons spec={() => customerStatement(stmtCustomer, useStore.getState().getBusinessData())} phone={stmtCustomer.phone} />
+                <div className="flex flex-wrap items-end gap-2 rounded-lg bg-muted p-3">
+                  <div className="me-auto text-sm">Balance due: <b className={bal > 0 ? 'text-destructive' : 'text-success'}>{settings.currency} {bal.toLocaleString()}</b></div>
+                  <Input type="number" placeholder="Amount received" className="w-36 h-9" value={payAmt} onChange={e => setPayAmt(e.target.value)} />
+                  <select className="h-9 rounded-md border border-input bg-background px-2 text-sm" value={payMethod} onChange={e => setPayMethod(e.target.value as PaymentMethod)}>
+                    {PAYMENT_METHODS.map(m => <option key={m}>{m}</option>)}
+                  </select>
+                  <Button size="sm" disabled={!(parseFloat(payAmt) > 0)} onClick={() => { receiveCustomerPayment(stmtCustomer.id, parseFloat(payAmt), payMethod); toast.success('Payment received'); setPayAmt(''); }}>Receive</Button>
+                </div>
+                <table className="w-full text-xs">
+                  <thead className="bg-muted"><tr>{spec.columns.map(c => <th key={c.header} className={`p-2 ${c.numeric ? 'text-right' : 'text-left'}`}>{c.header}</th>)}</tr></thead>
+                  <tbody>{spec.rows.map((r, i) => <tr key={i} className="border-t border-border">{spec.columns.map(c => <td key={c.header} className={`p-2 ${c.numeric ? 'text-right font-mono' : ''}`}>{String(c.value(r) ?? '')}</td>)}</tr>)}</tbody>
+                </table>
+                {spec.rows.length === 0 && <p className="text-sm text-muted-foreground text-center">No transactions yet</p>}
+              </div>
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </div>

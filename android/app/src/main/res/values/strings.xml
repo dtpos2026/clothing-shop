@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">DT Fabric POS</string>
+    <string name="title_activity_main">DT Fabric POS</string>
+    <string name="package_name">com.digitaltarget.fabricpos</string>
+    <string name="custom_url_scheme">com.digitaltarget.fabricpos</string>
+</resources>

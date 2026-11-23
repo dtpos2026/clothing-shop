@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
+import { isMeterProduct } from '@/core/inventory';
 import { useStore } from '@/store/useStore';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -16,6 +19,9 @@ export default function GoodsReceiving() {
   const [costPrice, setCostPrice] = useState('');
   const [supplier, setSupplier] = useState('');
   const [notes, setNotes] = useState('');
+  const [rollNo, setRollNo] = useState('');
+  const [params] = useSearchParams();
+  useEffect(() => { const id = params.get('product'); if (id) setProductId(id); }, [params]);
 
   const selectedProduct = products.find(p => p.id === productId);
 
@@ -31,7 +37,10 @@ export default function GoodsReceiving() {
       costPrice: parseFloat(costPrice) || undefined,
       supplier: supplier || undefined,
       notes: notes || undefined,
+      rollNo: selectedProduct && isMeterProduct(selectedProduct) && rollNo.trim() ? rollNo.trim() : undefined,
     });
+    toast.success(`Received ${quantity}${selectedProduct && isMeterProduct(selectedProduct) ? ' m' : ' pcs'}${rollNo ? ` as thaan ${rollNo}` : ''}`);
+    setRollNo('');
     setQuantity(''); setColor(''); setCostPrice(''); setSupplier(''); setNotes('');
   };
 
@@ -65,6 +74,12 @@ export default function GoodsReceiving() {
             <Label>Quantity ({selectedProduct?.stockMode.includes('meter') ? 'meters' : 'pieces'})</Label>
             <Input type="number" value={quantity} onChange={e => setQuantity(e.target.value)} />
           </div>
+          {selectedProduct && isMeterProduct(selectedProduct) && (
+            <div>
+              <Label>Thaan / roll no. (optional)</Label>
+              <Input value={rollNo} onChange={e => setRollNo(e.target.value)} placeholder="e.g. TH-0042 – tracked as its own roll" />
+            </div>
+          )}
           {selectedProduct && (selectedProduct.stockMode === 'color_piece' || selectedProduct.stockMode === 'color_meter') && (
             <div>
               <Label>Color</Label>
@@ -78,7 +93,7 @@ export default function GoodsReceiving() {
               </Select>
             </div>
           )}
-          <div><Label>Cost Price (optional)</Label><Input type="number" value={costPrice} onChange={e => setCostPrice(e.target.value)} /></div>
+          <div><Label>{selectedProduct && isMeterProduct(selectedProduct) ? 'Cost per meter' : 'Cost price'} (optional)</Label><Input type="number" value={costPrice} onChange={e => setCostPrice(e.target.value)} /></div>
           <div><Label>Supplier (optional)</Label><Input value={supplier} onChange={e => setSupplier(e.target.value)} /></div>
           <div className="col-span-2"><Label>Notes (optional)</Label><Input value={notes} onChange={e => setNotes(e.target.value)} /></div>
         </div>

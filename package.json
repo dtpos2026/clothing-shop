@@ -1,7 +1,7 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "dt-fabric-pos",
   "private": true,
-  "version": "0.0.0",
+  "version": "3.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,15 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "build:admin": "vite build --config vite.admin.config.ts",
+    "dev:admin": "vite --config vite.admin.config.ts",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit",
+    "electron:dev": "npm run build && electron .",
+    "electron:dist": "npm run build && electron-builder --win nsis --x64",
+    "android:sync": "npm run build && cap sync android",
+    "android:apk": "npm run android:sync && cd android && ./gradlew assembleRelease",
+    "e2e": "playwright test --trace off"
   },
   "dependencies": {
     "@capacitor-mlkit/barcode-scanning": "^8.2.2",
@@ -118,5 +126,46 @@
     "vite": "^5.4.19",
     "vitest": "^3.2.4"
   },
-  "main": "electron/main.cjs"
+  "main": "electron/main.cjs",
+  "description": "Digital Target Fabric & Clothing Store Management System (Windows, Android, Super Admin)",
+  "author": "Digital Target",
+  "build": {
+    "appId": "com.digitaltarget.fabricpos",
+    "productName": "DT Fabric POS",
+    "copyright": "Copyright \u00a9 Digital Target",
+    "directories": {
+      "output": "release",
+      "buildResources": "build-resources"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "public/favicon.ico",
+      "artifactName": "DT-Fabric-POS-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "DT Fabric POS",
+      "deleteAppDataOnUninstall": false
+    },
+    "extraMetadata": {
+      "main": "electron/main.cjs"
+    }
+  }
 }
