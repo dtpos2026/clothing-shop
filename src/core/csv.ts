@@ -18,12 +18,12 @@ export function csvCell(v: unknown): string {
 export function toCSV<T>(rows: T[], columns: Column<T>[]): string {
   const lines = [columns.map(c => csvCell(c.header)).join(',')];
   for (const r of rows) lines.push(columns.map(c => csvCell(c.value(r))).join(','));
-  return '﻿' + lines.join('\r\n');
+  return String.fromCharCode(0xfeff) + lines.join('\r\n');
 }
 
 /** Minimal RFC 4180 parser (handles quotes, commas and newlines inside quotes, BOM). */
 export function parseCSV(text: string): string[][] {
-  const src = text.replace(/^﻿/, '');
+  const src = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
   const rows: string[][] = [];
   let row: string[] = [];
   let cell = '';
